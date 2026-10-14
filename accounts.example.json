@@ -1,0 +1,14 @@
+[
+  {
+    "id": "main",
+    "label": "Main",
+    "npsso": "paste-the-64-character-npsso-here",
+    "storeLocale": "en-us"
+  },
+  {
+    "id": "second",
+    "label": "Second account",
+    "npsso": "paste-the-64-character-npsso-here",
+    "storeLocale": "en-gb"
+  }
+]

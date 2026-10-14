@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Game shelf</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --shelf: #E4E9F0;
+  --surface: #F8FAFC;
+  --raised: #FFFFFF;
+  --ink: #121A2B;
+  --muted: #566278;
+  --line: #C9D2DE;
+  --accent: #0B4FD6;
+  --accent-ink: #FFFFFF;
+  --bar: #D5DCE6;
+  --gold: #A9780A;
+  --warn: #A63A12;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --display: "Barlow Condensed", "Avenir Next Condensed", "Arial Narrow", var(--body);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shelf: #0F182B;
+    --surface: #17223A;
+    --raised: #1D2A46;
+    --ink: #E9EEF7;
+    --muted: #9BA9C0;
+    --line: #2C3A59;
+    --accent: #7FA8FF;
+    --accent-ink: #0A1226;
+    --bar: #2C3A59;
+    --gold: #E2B646;
+    --warn: #FF9A76;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--shelf);
+  color: var(--ink);
+  font: 400 15px/1.45 var(--body);
+  font-variant-numeric: tabular-nums;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hide { display: none !important; }
+
+.page { max-width: 1440px; margin: 0 auto; padding: 28px 24px 64px; }
+.masthead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; margin-bottom: 22px; }
+.masthead h1 { font: 600 40px/1 var(--display); letter-spacing: -0.005em; margin: 0; }
+.masthead p { margin: 0; color: var(--muted); }
+
+.layout { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 24px; align-items: start; }
+
+/* ---------- accounts rail ---------- */
+.rail { position: sticky; top: 16px; display: grid; gap: 8px; }
+.rail h2, .tools-label { font: 600 13px/1 var(--body); color: var(--muted); margin: 0 0 4px; }
+.acct {
+  display: grid; grid-template-columns: 8px 1fr; gap: 0 12px;
+  width: 100%; text-align: left; padding: 0; border: 1px solid var(--line);
+  background: var(--surface); border-radius: 3px 10px 10px 3px; overflow: hidden;
+}
+.acct .spine { background: var(--c); grid-row: 1 / span 2; }
+.acct .body { display: block; padding: 10px 12px 10px 0; min-width: 0; }
+.acct .name { font: 600 19px/1.15 var(--display); display: flex; gap: 8px; align-items: baseline; }
+.acct .name span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct .code { font: 600 12px/1 var(--body); color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 5px; flex: none; }
+.acct .sub { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct .nums { display: block; margin-top: 6px; font-size: 13px; }
+.acct .nums b { font-weight: 600; }
+.acct[aria-pressed="true"] { background: var(--raised); border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); }
+.acct.dim { opacity: .55; }
+.acct .err { grid-column: 2; color: var(--warn); font-size: 12.5px; padding: 0 12px 10px 0; }
+.rail .hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
+
+/* ---------- toolbar ---------- */
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.tools input[type=search], .tools select, .tools .btn {
+  height: 38px; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 0 12px;
+}
+.tools input[type=search] { flex: 1 1 240px; min-width: 0; }
+.tools input::placeholder { color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { border: 0; background: none; height: 36px; padding: 0 12px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.count { color: var(--muted); margin: 0 0 10px; font-size: 14px; }
+
+/* ---------- list ---------- */
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.head, .row {
+  display: grid; align-items: center; gap: 14px;
+  grid-template-columns: 56px minmax(0, 1fr) 150px 70px 84px 108px 150px;
+}
+.nodates .head, .nodates .row {
+  grid-template-columns: 56px minmax(0, 1fr) 150px 70px 84px 150px;
+  padding: 8px 14px 8px 10px;
+}
+.head { font-size: 13px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--line); padding-top: 10px; padding-bottom: 10px; }
+.head .r, .row .r { text-align: right; }
+.row { width: 100%; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; }
+.item:first-child .row { border-top: 0; }
+.row:hover { background: var(--raised); }
+.row[aria-expanded="true"] { background: var(--raised); }
+.title { font: 600 19px/1.2 var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta { color: var(--muted); font-size: 13px; display: flex; gap: 10px; flex-wrap: wrap; }
+.meta .tag { color: var(--ink); }
+.plat { color: var(--gold); font-weight: 600; }
+.stars { font-size: 13px; white-space: nowrap; }
+.stars b { font-weight: 600; }
+.stars i { color: var(--gold); font-style: normal; }
+.stars small { color: var(--muted); display: block; font-size: 11px; }
+.rate { border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.gdet { display: grid; gap: 3px 10px; grid-template-columns: 108px minmax(0, 1fr); font-size: 13.5px; }
+.gdet dt { color: var(--muted); }
+.gdet dd { margin: 0; }
+.rates { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.rates span { display: flex; gap: 4px; align-items: center; }
+.rates img { height: 26px; width: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 600; padding: 2px 7px 2px 0; border: 1px solid var(--line); border-radius: 2px 6px 6px 2px; background: var(--surface); }
+.chip::before { content: ""; width: 5px; align-self: stretch; background: var(--c); border-radius: 1px 0 0 1px; }
+.chip.ghost { border-style: dashed; font-weight: 500; color: var(--muted); }
+.prog { display: grid; grid-template-columns: 1fr 40px; gap: 8px; align-items: center; font-size: 13px; }
+.prog i { display: block; height: 6px; border-radius: 3px; background: var(--bar); overflow: hidden; }
+.prog i b { display: block; height: 100%; background: var(--accent); }
+.prog.plat i b { background: var(--gold); }
+.none { color: var(--muted); }
+
+/* ---------- cover with account spines ---------- */
+.cover { display: block; position: relative; width: 56px; aspect-ratio: 1; border-radius: 2px 6px 6px 2px; overflow: hidden; background: var(--ph); flex: none; }
+.cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.cover .ph { position: absolute; inset: 0; display: grid; place-items: center; padding: 0 0 0 6px; text-align: center; color: #fff; font: 600 22px/1.1 var(--display); overflow: hidden; }
+.cover .ph .full { display: none; }
+.cover .spines { position: absolute; inset: 0 auto 0 0; width: 6px; display: grid; }
+.cover .spines s { background: var(--c); }
+
+/* ---------- detail ---------- */
+.detail { border-top: 1px solid var(--line); background: var(--raised); padding: 14px 14px 18px 80px; display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.own { border-left: 5px solid var(--c); padding-left: 12px; min-width: 0; }
+.own h3 { font: 600 18px/1.2 var(--display); margin: 0 0 6px; }
+.own h3 small { font: 500 13px var(--body); color: var(--muted); margin-left: 6px; }
+.own dl { margin: 0; display: grid; grid-template-columns: 108px minmax(0, 1fr); gap: 3px 10px; font-size: 13.5px; }
+.own dt { color: var(--muted); }
+.own dd { margin: 0; overflow-wrap: anywhere; }
+.own a { color: var(--accent); }
+.own .ids { color: var(--muted); font-size: 12.5px; }
+
+/* ---------- grid view ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px 14px; }
+.grid .item { min-width: 0; }
+.grid .row { display: block; padding: 0; border: 0; }
+.grid .row:hover, .grid .row[aria-expanded="true"] { background: none; }
+.grid .cover { width: 100%; border-radius: 3px 10px 10px 3px; }
+.grid .cover .spines { width: 10px; }
+.grid .cover .ph { font-size: 21px; padding: 10px 10px 10px 20px; overflow-wrap: anywhere; }
+.grid .cover .ph .full { display: block; }
+.grid .cover .ph .ini { display: none; }
+.grid .title { font-size: 17px; margin-top: 7px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.grid .row > :not(.cover):not(.main) { display: none; }
+.grid .row[aria-expanded="true"] .cover { outline: 3px solid var(--accent); outline-offset: 2px; }
+.grid .item.open { grid-column: 1 / -1; display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 14px; }
+.grid .detail { padding: 0 0 0 4px; border: 0; background: none; align-content: start; }
+.grid .head { display: none; }
+.list.grid { background: none; border: 0; border-radius: 0; overflow: visible; }
+
+.empty { padding: 40px 20px; text-align: center; color: var(--muted); }
+.empty b { display: block; font: 600 22px var(--display); color: var(--ink); margin-bottom: 4px; }
+
+@media (max-width: 1080px) {
+  .head, .row { grid-template-columns: 56px minmax(0, 1fr) 130px 70px 84px 120px; }
+  .c-last { display: none; }
+}
+@media (max-width: 860px) {
+  .page { padding: 20px 16px 48px; }
+  .masthead h1 { font-size: 32px; }
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: static; grid-auto-flow: column; grid-auto-columns: 220px; overflow-x: auto; padding-bottom: 6px; align-items: start; }
+  .rail h2, .rail .hint { display: none; }
+  .head { display: none; }
+  .row { grid-template-columns: 56px minmax(0, 1fr) auto; }
+  .c-time, .c-last, .c-prog, .c-score { display: none; }
+  .detail { padding-left: 14px; }
+  .grid .item.open { grid-template-columns: minmax(0, 1fr); }
+  .grid .item.open .row { max-width: 150px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <h1>Game shelf</h1>
+    <p id="summary"></p>
+  </header>
+
+  <div class="layout">
+    <aside class="rail" id="rail" aria-label="Accounts"></aside>
+
+    <main>
+      <div class="tools">
+        <input type="search" id="q" placeholder="Search games" aria-label="Search games">
+        <select id="show" aria-label="Show">
+          <option value="all">All games</option>
+          <option value="owned">Owned</option>
+          <option value="multi">Owned on more than one account</option>
+          <option value="plus">From PS Plus</option>
+          <option value="unplayed">Owned, never played</option>
+          <option value="notowned">Played, not in purchases</option>
+          <option value="platinum">Platinum earned</option>
+        </select>
+        <select id="platform" aria-label="Platform"></select>
+        <select id="genre" aria-label="Genre"></select>
+        <select id="sort" aria-label="Sort by">
+          <option value="name">Sort by name</option>
+          <option value="last">Sort by last played</option>
+          <option value="time">Sort by time played</option>
+          <option value="progress">Sort by trophy progress</option>
+          <option value="released">Sort by release date</option>
+          <option value="score">Sort by score</option>
+        </select>
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" data-view="list">List</button>
+          <button type="button" data-view="grid">Covers</button>
+        </div>
+        <button type="button" class="btn" id="csv">Download CSV</button>
+      </div>
+      <p class="count" id="count" aria-live="polite"></p>
+      <div class="list" id="list"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+const LIB = /*__LIBRARY__*/null;
+
+const PALETTE = ["#0B63E5", "#E0562B", "#12976B", "#B6408F", "#C28A00", "#6A4BD8", "#0E8FA8", "#7A8699"];
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k, d) { try { return localStorage.getItem("shelf." + k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("shelf." + k, v); } catch {} },
+};
+
+const accounts = new Map();
+(LIB?.accounts ?? []).forEach((a, i) => accounts.set(a.id, { ...a, color: PALETTE[i % PALETTE.length], tag: a.regionCode || a.label.slice(0, 3) }));
+const games = LIB?.games ?? [];
+// A shared page has the play schedule stripped, so the whole Last played
+// column and its sort option would be dead furniture. Drop both.
+const HAS_DATES = games.some((g) => g.lastPlayed);
+
+const state = {
+  q: "",
+  show: "all",
+  platform: "all",
+  genre: "all",
+  sort: store.get("sort", "name"),
+  view: store.get("view", "list"),
+  accounts: new Set(),
+  open: null,
+};
+
+// ---------- formatting ----------
+function hours(sec) {
+  if (!sec) return "";
+  if (sec < 3600) return Math.max(1, Math.round(sec / 60)) + " min";
+  const h = sec / 3600;
+  return (h < 10 ? h.toFixed(1) : Math.round(h).toLocaleString()) + " h";
+}
+function day(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+function hue(name) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.codePointAt(0)) % 360;
+  return h;
+}
+function initials(name) {
+  const words = name.replace(/[®™©]/g, "").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  if (!words.length) return "?";
+  if (words.length === 1) return [...words[0]].slice(0, 2).join("").toUpperCase();
+  return ([...words[0]][0] + [...words[1]][0]).toUpperCase();
+}
+const sumT = (c) => c ? (c.bronze || 0) + (c.silver || 0) + (c.gold || 0) + (c.platinum || 0) : 0;
+
+// ---------- pieces ----------
+function cover(g) {
+  const owners = g.owners.filter((o) => o.owned);
+  const spines = (owners.length ? owners : g.owners)
+    .map((o) => `<s style="--c:${accounts.get(o.account)?.color}"></s>`).join("");
+  const img = g.image
+    ? `<img src="${esc(g.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+    : "";
+  return `<span class="cover" style="--ph:hsl(${hue(g.name)} 38% 34%)"><span class="ph" aria-hidden="true"><span class="ini">${esc(initials(g.name))}</span><span class="full">${esc(g.name.replace(/[®™©]/g, ""))}</span></span>${img}<span class="spines">${spines}</span></span>`;
+}
+function chips(g) {
+  return g.owners.map((o) => {
+    const a = accounts.get(o.account);
+    if (!a) return "";
+    const how = o.owned ? (o.viaPlus ? "PS Plus" : "owned") : "played only";
+    return `<span class="chip${o.owned ? "" : " ghost"}" style="--c:${a.color}" title="${esc(a.label)}: ${how}">${esc(a.tag)}${o.viaPlus ? " +" : ""}</span>`;
+  }).join("");
+}
+const year = (g) => (g.meta && g.meta.releaseDate ? `<span>${g.meta.releaseDate.slice(0, 4)}</span>` : "");
+const genreTag = (g) => (g.meta && g.meta.genres && g.meta.genres.length ? `<span>${esc(g.meta.genres.join(", "))}</span>` : "");
+const players = (g) => (g.meta && g.meta.players ? `<span>${esc(g.meta.players)}</span>` : "");
+function stars(g) {
+  const st = g.meta && g.meta.stars;
+  if (!st) return `<span class="none">-</span>`;
+  return `<span class="stars" title="${st.count.toLocaleString()} PSN ratings"><i>&#9733;</i> <b>${st.average.toFixed(2)}</b><small>${short(st.count)}</small></span>`;
+}
+function short(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, "") + "m";
+  if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 1).replace(/\.0$/, "") + "k";
+  return String(n);
+}
+// The same game carries a different rating per store, so show one badge per
+// authority rather than one per account: three accounts often agree.
+function ratingBadges(g) {
+  const seen = new Map();
+  for (const r of g.ageRatings || []) if (!seen.has(r.name)) seen.set(r.name, r);
+  return [...seen.values()].map((r) => {
+    const label = r.description || r.name.replace(/_/g, " ");
+    const img = r.url ? `<img src="${esc(r.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : "";
+    return `<span title="${esc(label)}">${img}<b>${esc(label)}</b></span>`;
+  }).join("");
+}
+function ratingTags(g) {
+  const names = [...new Set((g.ageRatings || []).map((r) => r.description || r.name.replace(/_/g, " ")))];
+  return names.map((n) => `<span class="rate">${esc(n)}</span>`).join("");
+}
+function progress(g) {
+  if (g.progress == null) return `<span class="none">No trophies</span>`;
+  return `<span class="prog${g.platinum ? " plat" : ""}" title="${g.platinum ? "Platinum earned" : "Trophy progress"}"><i><b style="width:${g.progress}%"></b></i><span>${g.progress}%</span></span>`;
+}
+function gameDetail(g) {
+  const m = g.meta;
+  if (!m && !(g.ageRatings || []).length) return "";
+  const rows = [];
+  if (m && m.releaseDate) rows.push(["Released", day(m.releaseDate)]);
+  if (m && m.publisher) rows.push(["Publisher", esc(m.publisher)]);
+  if (m && m.genres && m.genres.length) rows.push(["Genres", esc(m.genres.join(", "))]);
+  if (m && m.players) rows.push(["Players", esc(m.players)]);
+  if (m && m.stars) rows.push(["PSN rating", `${m.stars.average.toFixed(2)} / 5 from ${m.stars.count.toLocaleString()} ratings`]);
+  const badges = ratingBadges(g);
+  return `<section class="own">
+      <h3>Game details<small>From the PlayStation Store</small></h3>
+      <dl class="gdet">${rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("")}</dl>
+      ${badges ? `<div class="rates">${badges}</div>` : ""}
+    </section>`;
+}
+function detail(g) {
+  return gameDetail(g) + g.owners.map((o) => {
+    const a = accounts.get(o.account);
+    if (!a) return "";
+    const rows = [];
+    const sources = [...new Set(o.versions.map((v) => v.source))].join(", ");
+    rows.push(["Status", o.owned ? sources || "Owned" : sources || "Played only"]);
+    const stores = [...new Set(o.versions.map((v) => v.store).filter(Boolean))].join(", ");
+    if (stores) rows.push(["Bought from", stores]);
+    if (o.playSeconds) rows.push(["Time played", `${hours(o.playSeconds)}${o.playCount ? ` over ${o.playCount.toLocaleString()} sessions` : ""}`]);
+    else if (o.owned) rows.push(["Time played", "Never played on this account"]);
+    if (o.firstPlayed) rows.push(["First played", day(o.firstPlayed)]);
+    if (o.lastPlayed) rows.push(["Last played", day(o.lastPlayed)]);
+    for (const t of o.trophies) {
+      const e = t.earned, d = t.defined;
+      const counts = e ? `, ${sumT(e)} of ${sumT(d)} earned (${e.platinum ? "platinum, " : ""}${e.gold} gold, ${e.silver} silver, ${e.bronze} bronze)` : "";
+      rows.push([`Trophies${o.trophies.length > 1 ? " " + t.platform : ""}`, `${t.progress}%${counts}`]);
+    }
+    for (const v of o.versions) {
+      const link = v.productId && a.storeLocale
+        ? ` <a href="https://store.playstation.com/${esc(a.storeLocale)}/product/${esc(v.productId)}" target="_blank" rel="noopener noreferrer">Open in store</a>`
+        : "";
+      const ids = [v.titleId, v.productId].filter(Boolean).map(esc).join("<br>");
+      if (!ids && !link) continue; // shared pages carry no IDs: skip the empty row
+      rows.push([`${v.platform} copy`, `<span class="ids">${ids || "No ID"}</span>${link}`, true]);
+    }
+    return `<section class="own" style="--c:${a.color}">
+      <h3>${esc(a.label)}<small>${esc([a.regionName, a.onlineId].filter(Boolean).join(", "))}</small></h3>
+      <dl>${rows.map(([k, v, raw]) => `<dt>${esc(k)}</dt><dd>${raw ? v : esc(v)}</dd>`).join("")}</dl>
+    </section>`;
+  }).join("");
+}
+function item(g, i) {
+  const open = state.open === g.key;
+  const dup = g.ownedBy.length > 1 ? `<span class="tag">On ${g.ownedBy.length} accounts</span>` : "";
+  return `<div class="item${open ? " open" : ""}">
+    <button type="button" class="row" data-key="${esc(g.key)}" aria-expanded="${open}">
+      ${cover(g)}
+      <span class="main"><span class="title">${esc(g.name)}</span>
+        <span class="meta"><span>${esc(g.platforms.join(", "))}</span>${year(g)}${genreTag(g)}${players(g)}${dup}${g.platinum ? `<span class="plat">Platinum</span>` : ""}${ratingTags(g)}</span></span>
+      <span class="chips">${chips(g)}</span>
+      <span class="r c-score">${stars(g)}</span>
+      <span class="r c-time">${hours(g.playSeconds) || `<span class="none">Not played</span>`}</span>
+      ${HAS_DATES ? `<span class="r c-last">${day(g.lastPlayed)}</span>` : ""}
+      <span class="c-prog">${progress(g)}</span>
+    </button>
+    ${open ? `<div class="detail">${detail(g)}</div>` : ""}
+  </div>`;
+}
+
+// ---------- filtering ----------
+function visible() {
+  const q = state.q.trim().toLowerCase();
+  const sel = state.accounts;
+  let out = games.filter((g) => {
+    const owners = sel.size ? g.owners.filter((o) => sel.has(o.account)) : g.owners;
+    if (!owners.length) return false;
+    if (q && !g.name.toLowerCase().includes(q) && !owners.some((o) => o.versions.some((v) => (v.titleId || "").toLowerCase().includes(q)))) return false;
+    if (state.platform !== "all" && !g.platforms.includes(state.platform)) return false;
+    if (state.genre !== "all" && !((g.meta && g.meta.genres) || []).includes(state.genre)) return false;
+    const owned = owners.filter((o) => o.owned);
+    switch (state.show) {
+      case "owned": return owned.length > 0;
+      case "multi": return g.ownedBy.length > 1;
+      case "plus": return owned.some((o) => o.viaPlus);
+      case "unplayed": return owned.length > 0 && !g.owners.some((o) => o.playSeconds > 0);
+      case "notowned": return g.ownedBy.length === 0;
+      case "platinum": return owners.some((o) => o.trophies.some((t) => t.platinum));
+      default: return true;
+    }
+  });
+  const by = {
+    name: (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    last: (a, b) => (b.lastPlayed || "").localeCompare(a.lastPlayed || ""),
+    time: (a, b) => b.playSeconds - a.playSeconds,
+    released: (a, b) => ((b.meta && b.meta.releaseDate) || "").localeCompare((a.meta && a.meta.releaseDate) || ""),
+    score: (a, b) => (((b.meta && b.meta.stars) || {}).average || 0) - (((a.meta && a.meta.stars) || {}).average || 0),
+    progress: (a, b) => (b.progress ?? -1) - (a.progress ?? -1),
+  }[state.sort];
+  return out.sort((a, b) => by(a, b) || a.name.localeCompare(b.name));
+}
+
+// ---------- render ----------
+function renderRail() {
+  const any = state.accounts.size > 0;
+  $("#rail").innerHTML = `<h2>Accounts</h2>` + [...accounts.values()].map((a) => {
+    const on = state.accounts.has(a.id);
+    const sub = [a.onlineId, a.regionName].filter(Boolean).join(", ");
+    const err = a.errors?.length ? `<span class="err">${esc(a.errors.map((e) => `${e.section}: ${e.message}`).join(" "))}</span>` : "";
+    return `<button type="button" class="acct${any && !on ? " dim" : ""}" data-acct="${esc(a.id)}" aria-pressed="${on}" style="--c:${a.color}">
+      <span class="spine"></span>
+      <span class="body">
+        <span class="name"><span>${esc(a.label)}</span>${a.regionCode ? `<span class="code">${esc(a.regionCode)}</span>` : ""}${a.isPlus ? `<span class="code">PS Plus</span>` : ""}</span>
+        <span class="sub">${esc(sub) || "&nbsp;"}</span>
+        <span class="nums"><b>${a.owned.toLocaleString()}</b> owned, <b>${hours(a.playSeconds) || "0 h"}</b> played</span>
+      </span>${err}
+    </button>`;
+  }).join("") + `<p class="hint">Select an account to show only its games. Select several to combine them.</p>`;
+}
+function renderList() {
+  const rows = visible();
+  const el = $("#list");
+  el.className = "list" + (state.view === "grid" ? " grid" : "");
+  $("#count").textContent = rows.length === games.length
+    ? `${games.length.toLocaleString()} games`
+    : `${rows.length.toLocaleString()} of ${games.length.toLocaleString()} games`;
+  if (!games.length) {
+    el.innerHTML = `<div class="empty"><b>No games yet</b>Run <code>node sync.mjs</code> to pull your accounts, then reload this page.</div>`;
+    return;
+  }
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty"><b>Nothing matches</b>Clear the search or pick a different filter.</div>`;
+    return;
+  }
+  el.innerHTML = `<div class="head"><span></span><span>Game</span><span>Accounts</span><span class="r c-score">Score</span><span class="r c-time">Played</span>${HAS_DATES ? `<span class="r c-last">Last played</span>` : ""}<span class="c-prog">Trophies</span></div>` + rows.map(item).join("");
+}
+function renderSummary() {
+  const owned = games.filter((g) => g.ownedBy.length).length;
+  const secs = games.reduce((s, g) => s + g.playSeconds, 0);
+  const dup = games.filter((g) => g.ownedBy.length > 1).length;
+  const when = LIB?.generatedAt ? `Synced ${day(LIB.generatedAt)}.` : "";
+  $("#summary").textContent = games.length
+    ? `${owned.toLocaleString()} owned games on ${accounts.size} accounts, ${hours(secs) || "0 h"} played${dup ? `, ${dup} owned more than once` : ""}. ${when}`
+    : "";
+}
+function syncControls() {
+  document.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.view === state.view));
+  $("#sort").value = state.sort;
+}
+
+// ---------- events ----------
+$("#rail").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-acct]");
+  if (!b) return;
+  const id = b.dataset.acct;
+  state.accounts.has(id) ? state.accounts.delete(id) : state.accounts.add(id);
+  renderRail(); renderList();
+});
+$("#list").addEventListener("click", (e) => {
+  if (e.target.closest("a")) return;
+  const b = e.target.closest(".row");
+  if (!b) return;
+  const key = b.dataset.key;
+  state.open = state.open === key ? null : key;
+  renderList();
+  const again = [...document.querySelectorAll(".row")].find((r) => r.dataset.key === key);
+  again?.focus({ preventScroll: true });
+});
+$("#q").addEventListener("input", (e) => { state.q = e.target.value; renderList(); });
+$("#show").addEventListener("change", (e) => { state.show = e.target.value; renderList(); });
+$("#platform").addEventListener("change", (e) => { state.platform = e.target.value; renderList(); });
+$("#genre").addEventListener("change", (e) => { state.genre = e.target.value; renderList(); });
+$("#sort").addEventListener("change", (e) => { state.sort = e.target.value; store.set("sort", state.sort); renderList(); });
+document.querySelector(".seg").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-view]");
+  if (!b) return;
+  state.view = b.dataset.view; store.set("view", state.view);
+  syncControls(); renderList();
+});
+$("#csv").addEventListener("click", () => {
+  const head = ["Game", "Platforms", "Released", "Publisher", "Genres", "Players", "PSN score", "PSN ratings", "Age ratings", "Account", "Region", "Status", "Bought from", "Hours played", "Sessions", "First played", "Last played", "Trophy progress %", "Platinum", "Title IDs", "Product IDs"];
+  const lines = [head];
+  for (const g of visible()) for (const o of g.owners) {
+    if (state.accounts.size && !state.accounts.has(o.account)) continue;
+    const a = accounts.get(o.account);
+    const best = [...o.trophies].sort((x, y) => y.progress - x.progress)[0];
+    lines.push([
+      g.name, g.platforms.join(" / "),
+      (g.meta && g.meta.releaseDate) || "",
+      (g.meta && g.meta.publisher) || "",
+      (g.meta && g.meta.genres || []).join(" / "),
+      (g.meta && g.meta.players) || "",
+      (g.meta && g.meta.stars) ? g.meta.stars.average : "",
+      (g.meta && g.meta.stars) ? g.meta.stars.count : "",
+      // One account's own store rating, so each CSV row stays about that account.
+      ((g.ageRatings || []).find((r) => r.account === o.account) || {}).description || "",
+      a?.label, a?.regionCode,
+      [...new Set(o.versions.map((v) => v.source))].join(" / "),
+      [...new Set(o.versions.map((v) => v.store).filter(Boolean))].join(" / "),
+      o.playSeconds ? (o.playSeconds / 3600).toFixed(1) : "", o.playCount || "",
+      (o.firstPlayed || "").slice(0, 10), (o.lastPlayed || "").slice(0, 10),
+      best ? best.progress : "", o.trophies.some((t) => t.platinum) ? "yes" : "",
+      o.versions.map((v) => v.titleId).filter(Boolean).join(" / "),
+      o.versions.map((v) => v.productId).filter(Boolean).join(" / "),
+    ]);
+  }
+  const csv = lines.map((r) => r.map((c) => {
+    let s = String(c ?? "");
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+  a.download = "playstation-games.csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+// ---------- start ----------
+const plats = [...new Set(games.flatMap((g) => g.platforms))].sort().reverse();
+if (!HAS_DATES) {
+  $("#list").classList.add("nodates");
+  $("#sort").querySelector('option[value="last"]')?.remove();
+}
+$("#platform").innerHTML = `<option value="all">All platforms</option>` + plats.map((p) => `<option>${esc(p)}</option>`).join("");
+const genres = [...new Set(games.flatMap((g) => (g.meta && g.meta.genres) || []))].sort();
+$("#genre").innerHTML = `<option value="all">All genres</option>` + genres.map((g) => `<option>${esc(g)}</option>`).join("");
+if (!genres.length) $("#genre").hidden = true;
+if (!["list", "grid"].includes(state.view)) state.view = "list";
+syncControls(); renderSummary(); renderRail(); renderList();
+</script>
+</body>
+</html>

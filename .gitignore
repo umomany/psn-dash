@@ -1,0 +1,21 @@
+node_modules/
+
+# Your accounts and sessions - these let anyone act as your PSN accounts
+accounts.json
+.tokens.json
+
+# Your library and the pages built from it
+data/
+dashboard.html
+share.html
+
+# Local notes and tooling
+CLAUDE.md
+.claude/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
